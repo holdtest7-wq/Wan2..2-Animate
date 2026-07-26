@@ -1,0 +1,21 @@
+# extra_model_paths.yaml for Wan 2.2 Animate RunPod Serverless Worker
+# Maps ComfyUI model search paths to the Network Volume.
+#
+# Serverless Volume Mount: /runpod-volume/runpod-slim/ComfyUI/models/
+
+runpod_volume:
+  base_path: /runpod-volume/runpod-slim/ComfyUI/models/
+  checkpoints: checkpoints/
+  clip: text_encoders/
+  clip_vision: clip_vision/
+  configs: configs/
+  controlnet: controlnet/
+  diffusion_models: diffusion_models/
+  embeddings: embeddings/
+  loras: loras/
+  text_encoders: text_encoders/
+  unet: unet/
+  upscale_models: upscale_models/
+  vae: vae/
+  annotators: annotators/
+  sam2: sam2/
