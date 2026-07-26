@@ -26,7 +26,7 @@ jobs:
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
         with:
-          context: ./wan2-2-animate-serverless
-          file: ./wan2-2-animate-serverless/Dockerfile
+          context: .
+          file: ./Dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/wan2-2-animate-serverless:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/wan22-animate-serverless:latest
