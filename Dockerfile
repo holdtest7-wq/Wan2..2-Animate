@@ -11,7 +11,18 @@ FROM runpod/worker-comfyui:5.8.4-base
 ARG HF_TOKEN=""
 
 # Install required system & python packages
-RUN pip install --no-cache-dir onnxruntime-gpu torchvision "dghs-imgutils[gpu]"
+RUN pip install --no-cache-dir \
+    onnxruntime-gpu \
+    torchvision \
+    "dghs-imgutils[gpu]" \
+    matplotlib \
+    rotary-embedding-torch \
+    diffusers \
+    opencv-python \
+    scipy \
+    einops \
+    lark \
+    timm
 
 # Install all required custom nodes for Wan 2.2 Animate
 RUN git clone https://github.com/kijai/ComfyUI-segment-anything-2 /comfyui/custom_nodes/ComfyUI-segment-anything-2
