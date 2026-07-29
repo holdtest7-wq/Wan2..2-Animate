@@ -32,4 +32,18 @@ if [ -d "$NV_CUSTOM_NODES" ]; then
   done
 fi
 
+
+# Dynamically patch /handler.py at startup to capture gifs and videos from VHS_VideoCombine
+if [ -f "/handler.py" ]; then
+  python3 -c "
+with open('/handler.py', 'r') as f:
+    code = f.read()
+if 'gifs' not in code:
+    code = code.replace("['images']", "['images', 'gifs', 'videos']")
+    code = code.replace('"images"', '"images", "gifs", "videos"')
+    with open('/handler.py', 'w') as f:
+        f.write(code)
+" 2>/dev/null || true
+fi
+
 exec "$@"

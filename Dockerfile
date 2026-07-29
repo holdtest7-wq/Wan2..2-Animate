@@ -10,19 +10,22 @@ FROM runpod/worker-comfyui:5.8.4-base
 # Build-time tokens for gated downloads (if needed)
 ARG HF_TOKEN=""
 
-# Install required system & python packages
-RUN pip install --no-cache-dir \
+# Install required system & python packages directly into the RunPod virtual environment (/opt/venv)
+RUN /opt/venv/bin/pip install --no-cache-dir \
     onnxruntime-gpu \
     torchvision \
     "dghs-imgutils[gpu]" \
     matplotlib \
     rotary-embedding-torch \
     diffusers \
-    opencv-python \
+    opencv-python-headless \
     scipy \
     einops \
     lark \
-    timm
+    timm \
+    piexif \
+    accelerate \
+    gguf
 
 # Install all required custom nodes for Wan 2.2 Animate
 RUN git clone https://github.com/kijai/ComfyUI-segment-anything-2 /comfyui/custom_nodes/ComfyUI-segment-anything-2
@@ -43,6 +46,10 @@ RUN chmod +x /pre_start.sh
 
 # Optimize RAM usage
 RUN sed -i 's/python -u \/comfyui\/main.py --disable-auto-launch/python -u \/comfyui\/main.py --disable-auto-launch --cache-none/g' /start.sh
+# Patch /handler.py to extract gifs and videos from VHS_VideoCombine alongside images
+RUN sed -i 's/"images"/"images", "gifs", "videos"/g' /handler.py || true
+RUN sed -i 's/output_keys = \["images"\]/output_keys = \["images", "gifs", "videos"\]/g' /handler.py || true
+
 
 ENTRYPOINT ["/pre_start.sh"]
 CMD ["/start.sh"]
