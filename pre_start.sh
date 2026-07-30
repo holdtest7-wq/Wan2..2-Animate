@@ -46,4 +46,21 @@ if 'gifs' not in code:
 " 2>/dev/null || true
 fi
 
+
+# Dynamically patch /handler.py at startup to capture gifs and videos from VHS_VideoCombine
+python3 -c "
+import re
+for p in ['/handler.py', '/src/handler.py']:
+    try:
+        with open(p, 'r') as f:
+            code = f.read()
+        code = re.sub(r'if\\s+['\"]images['\"]\\s+in\\s+node_output:', 'if any(k in node_output for k in [\"images\", \"gifs\", \"videos\"]):', code)
+        code = re.sub(r'node_output\\[['\"]images['\"]\\]', '(node_output.get(\"images\") or node_output.get(\"gifs\") or node_output.get(\"videos\"))', code)
+        code = re.sub(r'node_output\\.get\\(['\"]images['\"]\\)', '(node_output.get(\"images\") or node_output.get(\"gifs\") or node_output.get(\"videos\"))', code)
+        with open(p, 'w') as f:
+            f.write(code)
+    except Exception as e:
+        pass
+" 2>/dev/null || true
+
 exec "$@"

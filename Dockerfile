@@ -46,9 +46,22 @@ RUN chmod +x /pre_start.sh
 
 # Optimize RAM usage
 RUN sed -i 's/python -u \/comfyui\/main.py --disable-auto-launch/python -u \/comfyui\/main.py --disable-auto-launch --cache-none/g' /start.sh
+RUN python3 -c "
+import re
+for p in ['/handler.py', '/src/handler.py']:
+    try:
+        with open(p, 'r') as f:
+            code = f.read()
+        code = re.sub(r'if\s+['"]images['"]\s+in\s+node_output:', 'if any(k in node_output for k in ["images", "gifs", "videos"]):', code)
+        code = re.sub(r'node_output\[['"]images['"]\]', '(node_output.get("images") or node_output.get("gifs") or node_output.get("videos"))', code)
+        code = re.sub(r'node_output\.get\(['"]images['"]\)', '(node_output.get("images") or node_output.get("gifs") or node_output.get("videos"))', code)
+        with open(p, 'w') as f:
+            f.write(code)
+        print('Patched', p)
+    except Exception as e:
+        print('Could not patch', p, e)
+" || true
 # Patch /handler.py to extract gifs and videos from VHS_VideoCombine alongside images
-RUN sed -i 's/"images"/"images", "gifs", "videos"/g' /handler.py || true
-RUN sed -i 's/output_keys = \["images"\]/output_keys = \["images", "gifs", "videos"\]/g' /handler.py || true
 
 
 ENTRYPOINT ["/pre_start.sh"]
