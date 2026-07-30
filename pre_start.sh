@@ -1,66 +1,33 @@
 #!/bin/bash
-# Pre-start script for Wan 2.2 Animate Serverless Worker
 
-NV_BASE="/runpod-volume/runpod-slim/ComfyUI"
-NV_INPUT="$NV_BASE/input"
-NV_OUTPUT="$NV_BASE/output"
-NV_CUSTOM_NODES="$NV_BASE/custom_nodes"
-COMFY_INPUT="/comfyui/input"
-COMFY_CUSTOM_NODES="/comfyui/custom_nodes"
-
-# Symlink input directory
-if [ -d "$NV_INPUT" ]; then
-  echo "INFO: Symlinking input files from Network Volume..."
-  ln -sf "$NV_INPUT"/* "$COMFY_INPUT"/ 2>/dev/null || true
+# Symlink input directory to network volume if it exists
+if [ -d "/runpod-volume/runpod-slim/ComfyUI/input" ]; then
+    rm -rf /comfyui/input
+    ln -s /runpod-volume/runpod-slim/ComfyUI/input /comfyui/input
 fi
 
-# Symlink output directory
-if [ -d "$NV_OUTPUT" ]; then
-  echo "INFO: Symlinking output files from Network Volume..."
-  find "$NV_OUTPUT" -maxdepth 2 -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.mp4" -o -name "*.webm" \) \
-    -exec ln -sf {} "$COMFY_INPUT"/ \; 2>/dev/null || true
+# Symlink output directory to network volume if it exists
+if [ -d "/runpod-volume/runpod-slim/ComfyUI/output" ]; then
+    rm -rf /comfyui/output
+    ln -s /runpod-volume/runpod-slim/ComfyUI/output /comfyui/output
 fi
 
-# Symlink custom nodes from Network Volume
-if [ -d "$NV_CUSTOM_NODES" ]; then
-  echo "INFO: Symlinking custom nodes from Network Volume..."
-  for node_dir in "$NV_CUSTOM_NODES"/*/; do
-    node_name=$(basename "$node_dir")
-    if [ ! -e "$COMFY_CUSTOM_NODES/$node_name" ]; then
-      ln -sf "$node_dir" "$COMFY_CUSTOM_NODES/$node_name" 2>/dev/null || true
-    fi
-  done
+# Link required custom nodes from network volume if they exist
+NETWORK_NODES="/runpod-volume/runpod-slim/ComfyUI/custom_nodes"
+if [ -d "$NETWORK_NODES" ]; then
+    for node_dir in "$NETWORK_NODES"/*; do
+        if [ -d "$node_dir" ]; then
+            node_name=$(basename "$node_dir")
+            if [ ! -d "/comfyui/custom_nodes/$node_name" ] && [ ! -L "/comfyui/custom_nodes/$node_name" ]; then
+                ln -s "$node_dir" "/comfyui/custom_nodes/$node_name"
+            fi
+        fi
+    done
 fi
-
 
 # Dynamically patch /handler.py at startup to capture gifs and videos from VHS_VideoCombine
-if [ -f "/handler.py" ]; then
-  python3 -c "
-with open('/handler.py', 'r') as f:
-    code = f.read()
-if 'gifs' not in code:
-    code = code.replace("['images']", "['images', 'gifs', 'videos']")
-    code = code.replace('"images"', '"images", "gifs", "videos"')
-    with open('/handler.py', 'w') as f:
-        f.write(code)
-" 2>/dev/null || true
+if [ -f "/patch_handler.py" ]; then
+    python3 /patch_handler.py || true
 fi
-
-
-# Dynamically patch /handler.py at startup to capture gifs and videos from VHS_VideoCombine
-python3 -c "
-import re
-for p in ['/handler.py', '/src/handler.py']:
-    try:
-        with open(p, 'r') as f:
-            code = f.read()
-        code = re.sub(r'if\\s+['\"]images['\"]\\s+in\\s+node_output:', 'if any(k in node_output for k in [\"images\", \"gifs\", \"videos\"]):', code)
-        code = re.sub(r'node_output\\[['\"]images['\"]\\]', '(node_output.get(\"images\") or node_output.get(\"gifs\") or node_output.get(\"videos\"))', code)
-        code = re.sub(r'node_output\\.get\\(['\"]images['\"]\\)', '(node_output.get(\"images\") or node_output.get(\"gifs\") or node_output.get(\"videos\"))', code)
-        with open(p, 'w') as f:
-            f.write(code)
-    except Exception as e:
-        pass
-" 2>/dev/null || true
 
 exec "$@"
