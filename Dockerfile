@@ -12,6 +12,7 @@ ARG HF_TOKEN=""
 
 # Install required system & python packages directly into the RunPod virtual environment (/opt/venv)
 RUN /opt/venv/bin/pip install --no-cache-dir \
+    scikit-image \
     onnxruntime-gpu \
     torchvision \
     "dghs-imgutils[gpu]" \
