@@ -25,9 +25,4 @@ if [ -d "$NETWORK_NODES" ]; then
     done
 fi
 
-# Dynamically patch /handler.py at startup to capture gifs and videos from VHS_VideoCombine
-if [ -f "/patch_handler.py" ]; then
-    python3 /patch_handler.py || true
-fi
-
 exec "$@"

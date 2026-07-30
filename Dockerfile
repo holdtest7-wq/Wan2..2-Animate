@@ -40,16 +40,17 @@ RUN git clone https://github.com/Fannovel16/ComfyUI-Frame-Interpolation /comfyui
 # Map extra model search paths to the Network Volume
 COPY extra_model_paths.yaml /comfyui/extra_model_paths.yaml
 
+# Replace handler.py with our modified version that supports gifs/videos output keys
+# (VHS_VideoCombine outputs under 'gifs' key which the stock handler ignores)
+COPY handler.py /handler.py
+
 # Pre-start script to symlink images and custom nodes
-COPY patch_handler.py /patch_handler.py
 COPY pre_start.sh /pre_start.sh
 RUN chmod +x /pre_start.sh
 
 # Optimize RAM usage
 RUN sed -i 's/python -u \/comfyui\/main.py --disable-auto-launch/python -u \/comfyui\/main.py --disable-auto-launch --cache-none/g' /start.sh
 
-# Patch /handler.py to extract gifs and videos from VHS_VideoCombine alongside images
-RUN python3 /patch_handler.py || true
-
 ENTRYPOINT ["/pre_start.sh"]
 CMD ["/start.sh"]
+
