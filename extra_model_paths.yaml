@@ -19,3 +19,6 @@ runpod_volume:
   vae: vae/
   annotators: annotators/
   sam2: sam2/
+  detection: detection/
+  onnx: detection/
+
